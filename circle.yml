@@ -16,12 +16,6 @@ buildSteps: &buildSteps
         - ./node-*
 
 jobs:
-  node-4:
-    docker:
-      - image: circleci/node:4
-    working_directory: ~/node-4
-    steps: *buildSteps
-
   node-6:
     docker:
       - image: circleci/node:6
@@ -50,17 +44,12 @@ jobs:
           name: Deploy
           command: npm publish
           # Output used for publish is from node 4 build
-          working_directory: $CIRCLE_WORKING_DIRECTORY/node-4
+          working_directory: $CIRCLE_WORKING_DIRECTORY/node-6
 
 workflows:
   version: 2
   build:
     jobs:
-      - node-4:
-          # Run for all tags (required to allow the deploy to trigger on version tags)
-          filters:
-            tags:
-              only: /.*/
       - node-6:
           # Run for all tags (required to allow the deploy to trigger on version tags)
           filters:
@@ -74,7 +63,6 @@ workflows:
       - deploy:
           # Deploy passing builds if they're tagged with a version
           requires:
-            - node-4
             - node-6
             - node-8
           filters:
