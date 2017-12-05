@@ -1,8 +1,6 @@
 {
 	"compilerOptions": {
 		"module": "commonjs",
-		"outDir": "lib",
-		"declaration": true,
 		"target": "ES6",
 		"noImplicitAny": true,
 		"noUnusedParameters": true,
@@ -14,6 +12,7 @@
 	},
 	"include": [
 		"src/**/*.ts",
+		"test/**/*.ts",
 		"typings/**/*.d.ts"
 	]
 }

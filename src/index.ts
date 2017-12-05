@@ -61,61 +61,54 @@ export class Request extends http.IncomingMessage {
 	};
 }
 
-export abstract class BaseTunnel extends EventEmitter {
-	abstract connect: NetConnectPromise;
-	abstract use: (middleware: Middleware) => void;
-	abstract listen: (path: string, callback?: (err?: Error, result?: any) => void) => this;
-	abstract close: (callback?: (err?: Error, result?: any) => void) => this;
+export interface Tunnel extends EventEmitter {
+	connect: NetConnectPromise;
+	use: (middleware: Middleware) => void;
+	listen: (path: string, callback?: (err?: Error, result?: any) => void) => this;
+	close: (callback?: (err?: Error, result?: any) => void) => this;
 }
 
-export class Tunnel extends BaseTunnel {
-	constructor() {
-		super();
+export const createTunnel = (): Tunnel => {
+	const tunnel = new EventEmitter() as Tunnel;
 
-		const middleware = new MiddlewareHandler() as MiddlewareHandlerAsync;
+	const middleware = new MiddlewareHandler() as MiddlewareHandlerAsync;
 
-		const server = http.createServer((_req, res) => {
-			res.writeHead(405, {'Content-Type': 'text/plain'});
-			res.end('Method not allowed');
-		});
+	const server = http.createServer((_req, res) => {
+		res.writeHead(405, {'Content-Type': 'text/plain'});
+		res.end('Method not allowed');
+	});
 
-		server.on('connect', (req: Request, cltSocket: net.Socket, head: Buffer) =>
-			middleware.handleAsync([ req, cltSocket, head ])
-			.then(() => {
-				const srvUrl = url.parse(`http://${req.url}`);
-				return connectSocket({
-					cltSocket,
-					hostname: srvUrl.hostname!,
-					port: parseInt(srvUrl.port!, 10),
-					head,
-					connect: this.connect,
-					req,
-				})
-				.then(() =>
-					this.emit('connect', srvUrl.hostname, srvUrl.port, head));
-			}).catch((err) => {
-				this.emit('error', err);
-				cltSocket.destroy();
-			}));
+	server.on('connect', (req: Request, cltSocket: net.Socket, head: Buffer) =>
+		middleware.handleAsync([ req, cltSocket, head ])
+		.then(() => {
+			const srvUrl = url.parse(`http://${req.url}`);
+			return connectSocket({
+				cltSocket,
+				hostname: srvUrl.hostname!,
+				port: parseInt(srvUrl.port!, 10),
+				head,
+				connect: tunnel.connect,
+				req,
+			})
+			.then(() =>
+				tunnel.emit('connect', srvUrl.hostname, srvUrl.port, head));
+		}).catch((err) => {
+			tunnel.emit('error', err);
+			cltSocket.destroy();
+		}));
 
-		this.use = middleware.use.bind(middleware);
-		this.listen = server.listen.bind(server);
-		this.close = server.close.bind(server);
-	}
-
-	connect = (port: number, host: string, _cltSocket: net.Socket, _req: Request): Promise<net.Socket> => {
-		const socket = net.connect(port, host);
-		return new Promise((resolve, reject) => {
+	tunnel.connect = (port: number, host: string, _cltSocket: net.Socket, _req: Request): Promise<net.Socket> =>
+		new Promise((resolve, reject) => {
+			const socket = net.connect(port, host);
 			socket.on('connect', () => resolve(socket));
 			socket.on('error', reject);
 		});
-	};
+	tunnel.use = middleware.use.bind(middleware);
+	tunnel.listen = server.listen.bind(server);
+	tunnel.close = server.close.bind(server);
 
-	private notImplemented = () => { throw new Error(); };
-	use = (_middleware: Middleware) => { this.notImplemented(); return; };
-	listen = (_path: string, _callback?: (err?: Error, result?: any) => void) => { this.notImplemented(); return this; };
-	close = (_callback?: (err?: Error, result?: any) => void) => { this.notImplemented(); return this; };
-}
+	return tunnel;
+};
 
 // Proxy authorization middleware for http tunnel.
 export type Middleware = (req: Request, cltSocket: net.Socket, head: Buffer, next: () => void) => void;

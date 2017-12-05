@@ -22,7 +22,7 @@ describe('tunnel', function() {
 		// so set a generous timeout here.
 		this.timeout(10000);
 		before(function(done) {
-			this.tunnel = new nodeTunnel.Tunnel();
+			this.tunnel = nodeTunnel.createTunnel();
 			return this.tunnel.listen(PORT, done);
 		});
 
@@ -52,7 +52,7 @@ describe('tunnel', function() {
 		this.timeout(60000);
 
 		before(function(done) {
-			this.tunnel = new nodeTunnel.Tunnel();
+			this.tunnel = nodeTunnel.createTunnel();
 			this.events = [];
 			this.tunnel.on('connect', function() {
 				return this.events.push({
@@ -128,7 +128,7 @@ describe('tunnel', function() {
 		const connectStr = `CONNECT localhost:${serverPort} HTTP/1.0\r\nHost: localhost:${serverPort}\r\n\r\n`;
 
 		beforeEach(function(done) {
-			this.tunnel = new nodeTunnel.Tunnel();
+			this.tunnel = nodeTunnel.createTunnel();
 			this.tunnel.connect = function(port: number, host: string) {
 				sock = net.connect(port, host);
 				return new Promise(function(resolve, reject) {
