@@ -13,10 +13,11 @@
     "Will Boyce <will@resin.io>"
   ],
   "scripts": {
-    "lint": "tslint --format stylish --project .",
-    "lintfix": "tslint --fix --format stylish --project .",
+    "lint": "resin-lint --typescript src test",
+    "check": "tsc --pretty --noEmit --diagnostics --project .",
     "build": "tsc --pretty --project ./tsconfig.dist.json",
-    "test": "mocha --compilers ts:ts-node/register/type-check test/",
+    "test": "mocha --require ts-node/register/type-check test/index.ts",
+    "prepublish": "require-npm4-to-publish",
     "prepare": "npm run build"
   },
   "license": "Apache-2.0",
@@ -27,16 +28,17 @@
   },
   "devDependencies": {
     "@types/bluebird": "3.5.16",
-    "@types/chai": "^4.0.8",
-    "@types/mocha": "^2.2.44",
-    "@types/node": "^8.0.47",
-    "@types/request-promise": "^4.1.39",
+    "@types/chai": "^3.5.2",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^8.10.29",
+    "@types/request-promise": "^4.1.42",
     "chai": "^3.5.0",
-    "mocha": "^2.5.3",
-    "request": "^2.83.0",
+    "mocha": "^5.2.0",
+    "request": "^2.88.0",
     "request-promise": "^4.2.2",
-    "ts-node": "^5.0.1",
-    "tslint": "^5.9.1",
-    "typescript": "^2.8.1"
+    "require-npm4-to-publish": "^1.0.0",
+    "resin-lint": "^1.5.7",
+    "ts-node": "^6.1.0",
+    "typescript": "^3.0.3"
   }
 }
